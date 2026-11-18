@@ -16,46 +16,49 @@ const cookieOptions = {
  * @access Public
  */
 async function registerUserController(req, res) {
-    const { username, email, password } = req.body;
+    try {
+        const { username, email, password } = req.body;
 
-    if (!username || !email || !password) {
-        return res.status(400).json({ message: "Please provide username, email, and password."   
+        if (!username || !email || !password) {
+            return res.status(400).json({ message: "Please provide username, email, and password." });
+        }
+
+        const isUserAlreadyExists = await userModel.findOne({
+            $or: [{ username }, { email }]
         });
-    }
 
-    const isUserAlreadyExists = await userModel.findOne({
-        $or: [{ username }, { email }]
-    });
+        if (isUserAlreadyExists) {
+            return res.status(400).json({ message: "User with this username or email already exists." });
+        }
+        const hash = await bcrypt.hash(password, 10);
 
-    if (isUserAlreadyExists) {
-        return res.status(400).json({ message: "User with this username or email already exists." 
+        const user = await userModel.create({
+            username,
+            email,
+            password: hash
         });
+        
+        const token = jwt.sign(
+            { id: user._id, username: user.username },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        );
+
+        res.cookie("token", token, cookieOptions);
+
+        res.status(201).json({
+            message: "User registered successfully.",
+            token,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email
+            },  
+        });
+    } catch (err) {
+        console.error("Register error:", err);
+        res.status(500).json({ message: err.message || "Registration failed due to a server error." });
     }
-    const hash = await bcrypt.hash(password, 10);
-
-    const user = await userModel.create({
-        username,
-        email,
-        password: hash
-    });
-    
-    const token = jwt.sign(
-        { id: user._id, username: user.username },
-        process.env.JWT_SECRET,
-        { expiresIn: "1d" }
-    )
-
-    res.cookie("token", token, cookieOptions);
-
-    res.status(201).json({
-        message: "User registered successfully.",
-        token,
-        user: {
-            id: user._id,
-            username: user.username,
-            email: user.email
-        },  
-    })      
 }
 
 
@@ -65,39 +68,48 @@ async function registerUserController(req, res) {
  * @access Public
  */
 async function loginUserController(req, res) {
-    const { email, password } = req.body;
+    try {
+        const { email, password } = req.body;
 
-    const user = await userModel.findOne({ email });
+        if (!email || !password) {
+            return res.status(400).json({ message: "Please provide email and password." });
+        }
 
-    if (!user) {
-        return res.status(400).json({
-            message: "Invalid email or password." 
+        const user = await userModel.findOne({ email });
+
+        if (!user) {
+            return res.status(400).json({
+                message: "Invalid email or password." 
+            });
+        }
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordValid) {
+            return res.status(400).json({
+                message: "Invalid email or password." 
+            });
+        }
+
+        const token = jwt.sign(
+            { id: user._id, username: user.username },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        );
+
+        res.cookie("token", token, cookieOptions);
+        res.status(200).json({
+            message: "User logged in successfully.",
+            token,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email
+            },
         });
+    } catch (err) {
+        console.error("Login error:", err);
+        res.status(500).json({ message: err.message || "Login failed due to a server error." });
     }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-        return res.status(400).json({
-            message: "Invalid email or password." 
-        });
-    }
-
-    const token = jwt.sign(
-        { id: user._id, username: user.username },
-        process.env.JWT_SECRET,
-        { expiresIn: "1d" }
-    )
-
-    res.cookie("token", token, cookieOptions);
-    res.status(200).json({
-        message: "User logged in successfully.",
-        token,
-        user: {
-            id: user._id,
-            username: user.username,
-            email: user.email
-        },
-    })
 }
 
 
@@ -133,17 +145,25 @@ async function logoutUserController(req, res) {
  * @access Private
  */
 async function getMeController(req, res) {
+    try {
+        const user = await userModel.findById(req.user.id).select("-password");
 
-    const user = await userModel.findById(req.user.id)
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
 
-    res.status(200).json({
-        message: "User information retrieved successfully.",
-        user: {
-            id: user._id,
-            username: user.username,
-            email: user.email
-        },
-    })
+        res.status(200).json({
+            message: "User information retrieved successfully.",
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email
+            },
+        });
+    } catch (err) {
+        console.error("getMe error:", err);
+        res.status(500).json({ message: err.message || "Failed to retrieve user." });
+    }
 }
 
 

@@ -1,16 +1,14 @@
-const mongoose=require("mongoose");
+const mongoose = require("mongoose");
 
-
-async function connectToDB(){
-    try{
-    await mongoose.connect(process.env.MONGO_URI)
-
-    console.log("Connected to Database")
+async function connectToDB() {
+    try {
+        await mongoose.connect(process.env.MONGO_URI, {
+            serverSelectionTimeoutMS: 8000,
+        });
+        console.log("Connected to MongoDB Database successfully");
+    } catch (err) {
+        console.error("CRITICAL: Failed to connect to MongoDB Database:", err.message);
     }
-    catch(err){
-        console.log(err)
-    }
-
 }
 
-module.exports=connectToDB;
+module.exports = connectToDB;
