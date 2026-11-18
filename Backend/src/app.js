@@ -7,8 +7,20 @@ const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
+const allowedOrigins = [
+  "http://localhost:5173",
+  ...(process.env.CLIENT_URL ? process.env.CLIENT_URL.split(",").map(url => url.trim().replace(/\/$/, "")) : [])
+];
+
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const normalized = origin.replace(/\/$/, "");
+    if (allowedOrigins.includes(normalized) || process.env.NODE_ENV !== "production") {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
   credentials: true,
 }));
 
