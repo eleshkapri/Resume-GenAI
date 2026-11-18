@@ -8,13 +8,19 @@ const Login = () => {
     const { loading, handleLogin } = useAuth()
     const navigate = useNavigate()
 
-    const[email, setEmail] = useState("")
-    const[password, setPassword] = useState("")
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [error, setError] = useState("")
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        await handleLogin({ email, password })
-        navigate('/')
+        setError("")
+        try {
+            await handleLogin({ email, password })
+            navigate('/')
+        } catch (err) {
+            setError(err.response?.data?.message || "Invalid email or password.")
+        }
     }
 
     if(loading){
@@ -25,6 +31,8 @@ const Login = () => {
     <main>
         <div className="form-container">
             <h1>Login</h1>
+
+            {error && <p style={{ color: "#ef4444", marginBottom: "1rem", fontSize: "0.9rem" }}>{error}</p>}
 
             <form onSubmit={handleSubmit}>
                 
