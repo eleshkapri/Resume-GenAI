@@ -26,10 +26,6 @@ export const useAuth = () => {
     setLoading(true);
     try {
       const data = await register({ username, email, password });
-      if (data?.token) {
-        localStorage.setItem("token", data.token);
-      }
-      setUser(data?.user || null);
       return data;
     } catch (err) {
       throw err;
