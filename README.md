@@ -16,13 +16,13 @@
 
 - [Core Capabilities](#-core-capabilities)
 - [Empirical Evaluation & Benchmark (Evals)](#-empirical-evaluation--benchmark-evals)
+- [📖 User Manual / How to Use](#-user-manual--how-to-use)
 - [System Architecture](#-system-architecture)
 - [Tech Stack](#-tech-stack)
 - [Project Structure](#-project-structure)
 - [Getting Started](#-getting-started)
 - [Environment Variables](#-environment-variables)
 - [API Reference](#-api-reference)
-- [Deployment Guide](#-deployment-guide)
 - [License](#-license)
 
 ---
@@ -35,7 +35,7 @@
 - **📅 Personalized Day-by-Day Roadmaps:** Synthesizes structured, actionable preparation plans customized to the candidate's detected technical gaps.
 - **❓ Targeted Interview Question Bank:** Curates domain-specific technical and behavioral questions accompanied by interviewer intent and recommended model answers.
 - **🖨️ Headless ATS Resume Generator:** Dynamically creates clean, semantic HTML resumes and compiles them into downloadable A4 PDF documents using headless **Puppeteer**.
-- **🔐 Secure Authentication:** Implements JWT-based sessions stored in HttpOnly cookies, bcrypt password hashing, and database-backed token blacklisting for secure logout.
+- **🔐 Secure Authentication:** Implements JWT-based sessions stored in HttpOnly cookies, Bearer token authorization, bcrypt password hashing, and database-backed token blacklisting for secure logout.
 
 ---
 
@@ -55,6 +55,39 @@ To verify system reliability and eliminate hallucination, the AI pipeline was ev
 
 ---
 
+## 📖 User Manual / How to Use
+
+Follow this step-by-step guide to get the most out of **Resume-GenAI**:
+
+### Step 1: Create an Account & Log In
+1. Navigate to the **Register** page.
+2. Enter your **Username**, **Email**, and **Password** (use the eye icon toggle to show/hide your password).
+3. Click **Register**. You will be redirected to the **Login** page with a confirmation message.
+4. Enter your credentials and click **Login** to enter your dashboard.
+
+### Step 2: Enter Job Description
+1. On the **Home** dashboard, paste the target Job Description (JD) into the **Target Job Description** textarea.
+2. Ensure you include the key skills, experience level, and role expectations from the employer.
+
+### Step 3: Provide Your Profile Details
+You have two flexible ways to provide your profile:
+* **Option A (Recommended):** Upload your current PDF resume using the drag-and-drop file uploader.
+* **Option B:** Type a quick summary in the **Quick Self-Description** box detailing your technical stack, projects, and years of experience.
+
+### Step 4: Generate Your Custom Interview Report
+1. Click the **Generate Interview Plan** button.
+2. The AI will evaluate your profile against the job description and present:
+   * **Match Score:** A calibrated percentage (0–100%) showing how closely your profile fits the role.
+   * **Skill Gaps:** Missing or weak skills flagged with severity indicators (`High`, `Medium`, or `Low`).
+   * **Day-by-Day Preparation Plan:** Structured, daily study topics and actionable tasks to close your skill gaps.
+   * **Technical & Behavioral Questions:** Real interview questions with the interviewer's hidden intent and suggested answer approaches.
+
+### Step 5: Export Tailored ATS Resume
+1. In your report view, click the **Download Tailored Resume** button.
+2. The platform will automatically convert your tailored resume into an ATS-friendly, professional A4 PDF ready for job applications.
+
+---
+
 ## 🏗️ System Architecture
 
 ```mermaid
@@ -63,7 +96,7 @@ flowchart TD
         UI["Modern UI / SCSS Pages"]
         AuthCtx["Auth Context & Protected Routes"]
         InterviewCtx["Interview & Resume Context"]
-        AxiosClient["Axios API Client (HttpOnly Cookies)"]
+        AxiosClient["Axios API Client (HttpOnly Cookies + Bearer Token)"]
     end
 
     subgraph Server ["Backend (Node.js + Express 5)"]
@@ -95,10 +128,10 @@ flowchart TD
 ## 🛠️ Tech Stack
 
 ### **Frontend**
-- **Framework:** React 19 (Hooks, Context API, Modular Features)
+- **Framework:** React 19 (Hooks, Context API, Modular Feature Architecture)
 - **Tooling:** Vite 8, React Router 8
 - **Styling:** SCSS, Responsive Layouts, Utility Modules
-- **HTTP Client:** Axios (with credential support)
+- **HTTP Client:** Axios (Interceptors for Bearer token & cookie support)
 
 ### **Backend**
 - **Runtime:** Node.js (v20+)
@@ -211,7 +244,7 @@ Open `http://localhost:5173` in your browser.
 
 | Method | Endpoint | Access | Description |
 | :--- | :--- | :---: | :--- |
-| `POST` | `/api/auth/register` | Public | Register a new user and receive authentication cookie |
+| `POST` | `/api/auth/register` | Public | Register a new user |
 | `POST` | `/api/auth/login` | Public | Authenticate existing user credentials |
 | `POST` | `/api/auth/logout` | Public | Invalidate and blacklist the current JWT session |
 | `GET` | `/api/auth/get-me` | Private | Retrieve profile data for currently logged-in user |
@@ -224,22 +257,6 @@ Open `http://localhost:5173` in your browser.
 | `GET` | `/api/interview/report/:interviewId` | Private | Fetch a single generated interview report by ID |
 | `GET` | `/api/interview/` | Private | List all past interview reports for the authenticated user |
 | `POST` | `/api/interview/resume/pdf/:interviewReportId` | Private | Generate and download an ATS-friendly A4 PDF resume |
-
----
-
-## 🌐 Deployment Guide
-
-### Deploying the Backend on Render
-1. Create a new **Web Service** on [Render](https://render.com) linked to your GitHub repository.
-2. Set **Root Directory** to `Backend`.
-3. Set **Build Command** to `npm install` and **Start Command** to `node server.js`.
-4. Add environment variables: `MONGO_URI`, `JWT_SECRET`, `GOOGLE_GENAI_API_KEY`, `NODE_ENV=production`, `CLIENT_URL`.
-
-### Deploying the Frontend on Vercel
-1. Import your repository into [Vercel](https://vercel.com).
-2. Set **Root Directory** to `Frontend` and **Framework Preset** to `Vite`.
-3. Add environment variable: `VITE_API_URL` pointing to your deployed Render URL (e.g. `https://resume-genai-backend.onrender.com`).
-4. Click **Deploy**. Update `CLIENT_URL` on Render with your live Vercel URL.
 
 ---
 
